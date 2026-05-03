@@ -1643,6 +1643,45 @@ async function sbFetch(path, opts={}){
   return [];
 }
 
+// ── Demo mode overrides for loadData, loadSettings, loadContractors ──
+const _realLoadData        = loadData;
+const _realLoadSettings    = loadSettings;
+const _realLoadContractors = loadContractors;
+
+async function loadData(silent){
+  if(!_demoMode) return _realLoadData(silent);
+  // Demo mode — just render with existing demo vehicles, don't touch DB
+  vehicles = vehicles.length ? vehicles : getDemoVehicles();
+  renderActive();
+  renderPending();
+  updateDash();
+  return;
+}
+
+async function loadSettings(){
+  if(!_demoMode) return _realLoadSettings();
+  CFG = {TOTAL_SPACES:75, DAILY_CAP:0, LONG_CAP:75};
+  updateAllocBar && updateAllocBar();
+  return;
+}
+
+async function loadContractors(){
+  if(!_demoMode) return _realLoadContractors();
+  contractorsList = [{id:1,name:'City Parking Ltd',rate1:4.50,rate2:3.50,threshold:20,active:true}];
+  return;
+}
+
+async function loadEmailCFG(){
+  if(!_demoMode){ 
+    // call original
+    _emailCFGLoaded = false;
+  }
+  emailCFG = {apiKey:'',fromEmail:'demo@parkdesk.co.uk',hotelName:'ParkDesk Demo Hotel',
+    replyEmail:'demo@parkdesk.co.uk',onCheckin:true,onCheckout:true,
+    onPending:true,onApproved:true,onReminder:true,overstayDays:1,overstayRate:10};
+  _emailCFGLoaded = true;
+}
+
 // ── Global error handler ──
 window.onerror=function(msg,src,line){
   console.error('JS Error:',msg,'line:',line);
