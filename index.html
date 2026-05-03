@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ParkDesk — Airport Parking Management (Demo)</title>
+<title>Your Hotel Name — Parking Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -322,7 +322,7 @@ create table if not exists app_users (
 alter table app_users enable row level security;
 create policy "u_all" on app_users for all using (true) with check (true);
 
--- Insert default admin (set your own password)
+-- Insert default admin (password: YourPassword123)
 insert into app_users (username, password_hash, role, full_name)
 values ('admin', 'ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270', 'admin', 'Administrator')
 on conflict (username) do nothing;
@@ -508,7 +508,7 @@ create policy "eq_update" on email_queue for update using (true);
 -- Email settings keys (added to app_settings)
 insert into app_settings (key, value) values
   ('email_api_key',''),('email_from',''),
-  ('email_hotel_name','Your Hotel Name'),  -- replace with your hotel name
+  ('email_hotel_name','Your Hotel Name'),
   ('email_reply_to',''),
   ('email_on_checkin','true'),('email_on_checkout','true'),
   ('email_on_pending','true'),('email_on_approved','true'),
@@ -771,17 +771,31 @@ on conflict (key) do nothing;</textarea>
       </div>
 
       <div class="card" style="padding:0;overflow:hidden">
-        <div class="card-header">
-          <span class="card-header-title">Active vehicles</span>
-          <input type="text" id="search-active" placeholder="Reg or name..." style="width:140px;height:30px" oninput="renderActive()">
-          <select id="filter-location" style="width:120px;height:30px;font-size:12px" onchange="renderActive()">
-            <option value="">All locations</option>
-            <option value="hotel">Hotel only</option>
-            <option value="contractor">Contractor only</option>
-          </select>
-          <input type="date" id="filter-active-from" style="width:130px;height:30px;font-size:12px" oninput="renderActive()" title="Check-in from">
-          <input type="date" id="filter-active-to" style="width:130px;height:30px;font-size:12px" oninput="renderActive()" title="Check-in to">
-          <button class="btn" style="font-size:12px;padding:5px 10px" onclick="clearActiveFilters()">Clear</button>
+        <div class="card-header" style="flex-wrap:wrap;gap:6px;padding:10px 14px">
+          <!-- Quick split tabs -->
+          <div style="display:flex;gap:3px;border:1px solid var(--border);border-radius:8px;padding:3px;background:var(--surface);flex-shrink:0">
+            <button id="split-all"        onclick="setActiveSplit('')"          style="font-size:11px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;background:var(--navy-mid);color:#fff;font-family:inherit;white-space:nowrap">All</button>
+            <button id="split-hotel"      onclick="setActiveSplit('hotel')"     style="font-size:11px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--text-2);font-family:inherit;white-space:nowrap">🏨 Hotel</button>
+            <button id="split-contractor" onclick="setActiveSplit('contractor')" style="font-size:11px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--text-2);font-family:inherit;white-space:nowrap">🚗 Contractor</button>
+            <button id="split-returning"  onclick="setActiveSplit('returning')"  style="font-size:11px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--text-2);font-family:inherit;white-space:nowrap">↩ To Return</button>
+          </div>
+          <!-- Search -->
+          <input type="text" id="search-active" placeholder="🔍 Reg or name..." style="width:150px;height:32px" oninput="renderActive()">
+          <!-- Check-in date range -->
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            <span style="font-size:11px;color:var(--text-3);white-space:nowrap">Check-in:</span>
+            <input type="date" id="filter-active-from" style="width:130px;height:32px;font-size:12px" oninput="renderActive()" title="Check-in from">
+            <span style="font-size:11px;color:var(--text-3)">–</span>
+            <input type="date" id="filter-active-to"   style="width:130px;height:32px;font-size:12px" oninput="renderActive()" title="Check-in to">
+          </div>
+          <!-- Return date range -->
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            <span style="font-size:11px;color:var(--text-3);white-space:nowrap">Return:</span>
+            <input type="date" id="filter-return-from" style="width:130px;height:32px;font-size:12px" oninput="renderActive()" title="Return date from">
+            <span style="font-size:11px;color:var(--text-3)">–</span>
+            <input type="date" id="filter-return-to"   style="width:130px;height:32px;font-size:12px" oninput="renderActive()" title="Return date to">
+          </div>
+          <button class="btn" style="font-size:12px;padding:5px 10px" onclick="clearActiveFilters()">✕ Clear</button>
           <button class="btn" style="margin-left:auto;font-size:12px" onclick="loadData(true)">↻ Refresh</button>
         </div>
         <!-- Batch move toolbar — shown when vehicles selected -->
@@ -1452,7 +1466,7 @@ create policy "photos_insert" on storage.objects
 
   </main>
   <footer style="background:linear-gradient(90deg,var(--navy) 0%,var(--navy-mid) 100%);border-top:2px solid var(--gold);padding:10px 1.1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-    <span style="font-size:10px;color:rgba(255,255,255,.5)">ParkDesk — Airport Parking &nbsp;·&nbsp; © 2026 ParkDesk Demo</span>
+    <span style="font-size:10px;color:rgba(255,255,255,.5)">Your Hotel Name — Airport Parking &nbsp;·&nbsp; © 2026 ParkDesk Demo</span>
     <div style="display:flex;gap:12px;align-items:center">
       <a href="/privacy.html" target="_blank" style="font-size:10px;color:rgba(255,255,255,.6);text-decoration:none">Privacy Policy</a>
       <span style="font-size:10px;color:rgba(255,255,255,.4)">·</span>
@@ -1953,7 +1967,7 @@ function updateDash(){
               <div style="font-size:11px;color:var(--text-3)">Collection by</div>
               <div style="font-size:12px;font-weight:600;color:${urgText}">${returnTime}</div>
             </div>
-            <button onclick="showDetail('${v.reg}')"
+            <button onclick="showTab('active',document.querySelector('[onclick*=tab-active]')||document.querySelector('nav button'));setTimeout(()=>showDetail('${v.reg}'),200);"
               style="background:#10B981;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">
               ✓ Check out
             </button>
@@ -2579,24 +2593,44 @@ async function saveBookingEdit(reg){
 
 function clearActiveFilters(){
   document.getElementById('search-active').value='';
-  document.getElementById('filter-location').value='';
-  document.getElementById('filter-active-from').value='';
-  document.getElementById('filter-active-to').value='';
+  let fields=['filter-active-from','filter-active-to','filter-return-from','filter-return-to'];
+  fields.forEach(id=>{ let el=document.getElementById(id); if(el) el.value=''; });
+  setActiveSplit(''); // reset to All
+}
+
+let _activeSplit='';
+function setActiveSplit(split){
+  _activeSplit=split;
+  ['all','hotel','contractor','returning'].forEach(s=>{
+    let btn=document.getElementById('split-'+s);
+    if(!btn)return;
+    let active=(s===split)||(s==='all'&&!split);
+    btn.style.background=active?'var(--navy-mid)':'transparent';
+    btn.style.color=active?'#fff':'var(--text-2)';
+    btn.style.fontWeight=active?'600':'400';
+  });
   renderActive();
 }
 
 function renderActive(){
-  let q=(document.getElementById('search-active').value||'').toLowerCase();
-  let locFilter=(document.getElementById('filter-location')||{}).value||'';
-  let fromF=(document.getElementById('filter-active-from')||{}).value||'';
-  let toF=(document.getElementById('filter-active-to')||{}).value||'';
+  let q       =(document.getElementById('search-active')?.value||'').toLowerCase();
+  let fromF   = document.getElementById('filter-active-from')?.value||'';
+  let toF     = document.getElementById('filter-active-to')?.value||'';
+  let retFrom = document.getElementById('filter-return-from')?.value||'';
+  let retTo   = document.getElementById('filter-return-to')?.value||'';
   let td=today();
-  let list=vehicles.filter(v=>
-    (!q||v.reg.toLowerCase().includes(q)||v.name.toLowerCase().includes(q))&&
-    (!locFilter||v.location===locFilter)&&
-    (!fromF||v.check_in_date>=fromF)&&
-    (!toF||v.check_in_date<=toF)
-  );
+  let in2=addDays(td,2);
+  let list=vehicles.filter(v=>{
+    if(q&&!v.reg.toLowerCase().includes(q)&&!v.name.toLowerCase().includes(q))return false;
+    if(fromF&&v.check_in_date<fromF)return false;
+    if(toF&&v.check_in_date>toF+'T23:59')return false;
+    if(retFrom&&(v.return_date||'')< retFrom)return false;
+    if(retTo&&(v.return_date||'')>retTo+'T23:59')return false;
+    if(_activeSplit==='hotel')      return v.location==='hotel';
+    if(_activeSplit==='contractor') return v.location==='contractor';
+    if(_activeSplit==='returning')  return v.location==='contractor'&&v.return_date&&v.return_date<=in2+'T23:59';
+    return true;
+  });
   let tbody=document.getElementById('active-tbody');
   let ret=vehicles.filter(v=>v.location==='contractor'&&v.return_date<=td);
   document.getElementById('active-alerts').innerHTML=ret.length?`<div class="alert warn">${ret.length} vehicle(s) due back today — move from contractor to hotel: ${ret.map(v=>'<strong>'+v.reg+'</strong>').join(', ')}</div>`:'';
@@ -2962,7 +2996,7 @@ function exportPDF(){
   let totalC=rows.reduce((s,r)=>s+(r.contCost||0),0);
   let thCells=headers.map(h=>`<th>${h}</th>`).join('');
   let trRows=rows.map(r=>'<tr>'+rowToArray(r,type).map(c=>`<td>${c||'–'}</td>`).join('')+'</tr>').join('');
-  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ParkDesk Parking Report (Demo)</title>
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Your Hotel Name Parking Report</title>
   <style>
     body{font-family:Arial,sans-serif;font-size:10px;padding:20px;color:#1a1a1a}
     h1{font-size:16px;margin-bottom:4px}
@@ -2975,14 +3009,14 @@ function exportPDF(){
     tr:nth-child(even) td{background:#fafafa}
     .footer{margin-top:20px;font-size:9px;color:#aaa;text-align:right}
   </style></head><body>
-  <h1>ParkDesk — Parking Report (Demo)</h1>
+  <h1>Your Hotel Name — Parking Report</h1>
   <div class="meta">Type: ${type} &nbsp;·&nbsp; Generated: ${new Date().toLocaleString()} &nbsp;·&nbsp; Records: ${rows.length}</div>
   <div class="summary">
     <div class="s-item"><div class="l">Records</div><div class="v">${rows.length}</div></div>
     ${totalC>0?`<div class="s-item"><div class="l">Contractor cost</div><div class="v" style="color:#633806">£${totalC.toFixed(2)}</div></div>`:''}
   </div>
   <table><thead><tr>${thCells}</tr></thead><tbody>${trRows}</tbody></table>
-  <div class="footer">ParkDesk Demo &nbsp;·&nbsp; ${today()}</div>
+  <div class="footer">Your Hotel Name Parking &nbsp;·&nbsp; ${today()}</div>
   </body></html>`;
   let w=window.open('','_blank');
   w.document.write(html);
@@ -3533,19 +3567,15 @@ async function saveEmailSettings(){
   emailCFG.overstayDays= parseInt(g('s-overstay-days')?.value)||1;
   emailCFG.overstayRate= parseFloat(g('s-overstay-rate')?.value)||10;
 
-  if(!emailCFG.apiKey){
-    let m=document.getElementById('email-save-msg');
-    m.innerHTML='<div class="alert warn">Please enter your Resend API key before saving.</div>';
-    return;
-  }
-  if(!emailCFG.fromEmail){
-    let m=document.getElementById('email-save-msg');
-    m.innerHTML='<div class="alert warn">Please enter a From email address before saving.</div>';
-    return;
-  }
-
+  // Warn about missing API key but don't block the save
+  // User might just be updating overstay rate or other settings
   let m=document.getElementById('email-save-msg');
-  m.innerHTML='<div class="alert info">Saving to database...</div>';
+  if(!emailCFG.apiKey){
+    m.innerHTML='<div class="alert warn">⚠ No API key set — emails won\'t send until you add a Resend key. Other settings will still save.</div>';
+    setTimeout(()=>m.innerHTML='',5000);
+  } else {
+    m.innerHTML='<div class="alert info">Saving to database...</div>';
+  }
   showLoading('Saving email settings...');
   try{
     await saveEmailCFGToSupabase(emailCFG);
@@ -3560,7 +3590,7 @@ async function saveEmailSettings(){
 }
 
 function saveSecuritySettings(){
-  let timeout = parseInt(document.getElementById('s-session-timeout').value)||60;
+  let timeout = parseInt(document.getElementById('s-session-timeout').value)||15;
   let maxAttempts = parseInt(document.getElementById('s-max-attempts').value)||5;
   localStorage.setItem('heathrow_sec_cfg',JSON.stringify({sessionTimeout:timeout,maxAttempts}));
   SESSION_TIMEOUT_MS = timeout>0 ? timeout*60*1000 : 0;
@@ -5040,7 +5070,7 @@ function printKeyTagFromPending(p){
       '<div class="tag">',
       '  <div class="tag-hdr">',
       '    <div style="display:flex;justify-content:space-between;align-items:center">',
-      '      <div><h1>ParkDesk Demo</h1><p>Airport Parking \u2014 Key Tag</p></div>',
+      '      <div><h1>Your Hotel Name</h1><p>Airport Parking \u2014 Key Tag</p></div>',
       '      <div style="font-size:9px;color:rgba(255,255,255,.6)">Copy '+copyNum+' of 2</div>',
       '    </div>',
       '  </div>',
@@ -5145,7 +5175,7 @@ function buildReceiptHTML(v, mode){
   return `
     <div id="printable-receipt">
       <div style="text-align:center;padding-bottom:1rem;border-bottom:2px solid #eee;margin-bottom:0.6rem">
-        <div style="font-size:20px;font-weight:700;margin-bottom:2px">ParkDesk Demo Hotel</div>
+        <div style="font-size:20px;font-weight:700;margin-bottom:2px">Your Hotel Name</div>
         <div style="font-size:13px;color:#888">Airport Parking — Cost Summary</div>
         <div style="font-size:11px;color:#aaa;margin-top:4px">Printed: ${new Date().toLocaleString('en-GB')}</div>
       </div>
@@ -5208,7 +5238,7 @@ function buildReceiptHTML(v, mode){
       ${timelineHTML}
 
       <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;text-align:center;font-size:11px;color:#aaa">
-        ParkDesk &nbsp;·&nbsp; Airport Parking System &nbsp;·&nbsp; demo.parkdesk.co.uk
+        Your Hotel Name &nbsp;·&nbsp; Airport Parking &nbsp;·&nbsp; 1 Airport Road, London
       </div>
     </div>`
 }
@@ -5478,12 +5508,10 @@ async function doLogin(){
     errEl.innerHTML='<div class="alert warn">Please enter your email address and password.</div>';
     return;
   }
-
   // ── DEMO MODE: bypass database login ──
   // Demo credentials: demo@parkdesk.co.uk / demo1234
   if((email==='demo@parkdesk.co.uk'||email==='demo') && password==='demo1234'){
     errEl.innerHTML='<div class="alert info" style="font-size:12px">⏳ Loading demo...</div>';
-    // Set Supabase URL/key to dummy values for demo
     SB_URL = 'https://demo.supabase.co';
     SB_KEY = 'demo_key';
     localStorage.setItem('heathrow_sb_url','https://demo.supabase.co');
@@ -5492,7 +5520,6 @@ async function doLogin(){
       role:'admin',full_name:'Demo Manager',contractor_id:null};
     localStorage.setItem('heathrow_user',JSON.stringify(currentUser));
     resetLoginAttempts();
-    // Load sample demo data instead of real DB
     vehicles = getDemoVehicles();
     contractorsList = [{id:1,name:'City Parking Ltd',rate1:4.50,rate2:3.50,threshold:20,active:true}];
     CFG = {TOTAL_SPACES:75,DAILY_CAP:0,LONG_CAP:75};
@@ -5816,8 +5843,10 @@ async function saveSettings(){
   let get=id=>parseFloat(document.getElementById(id).value)||0;
   let daily=get('s-daily-cap'), lng=get('s-long-cap'), total=get('s-total-spaces');
   if(daily+lng!==total){
-    document.getElementById('settings-save-msg').innerHTML='<div class="alert warn">Daily slots ('+daily+') + Long-stay slots ('+lng+') must equal Total spaces ('+total+').</div>';
-    return;
+    // Warn but don't block — manager may still be adjusting numbers
+    document.getElementById('settings-save-msg').innerHTML='<div class="alert warn">⚠ Daily ('+daily+') + Long-stay ('+lng+') = '+(daily+lng)+' which doesn\'t match total ('+total+'). Check your numbers.</div>';
+    setTimeout(()=>document.getElementById('settings-save-msg').innerHTML='',5000);
+    // Continue saving anyway
   }
   let updates=[
     {key:'daily_cap',value:''+daily},
@@ -6074,7 +6103,7 @@ async function pollAnprCamera(){
 // ════════════════════════════════════════════
 // HARDCODED CREDENTIALS — edit these two lines
 // ════════════════════════════════════════════
-const HARDCODED_URL = 'https://YOUR_SUPABASE_URL.supabase.co';
+const HARDCODED_URL = 'https://demo.supabase.co';
 const HARDCODED_KEY = 'YOUR_SUPABASE_ANON_KEY';
 // ════════════════════════════════════════════
 
@@ -6747,7 +6776,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <div id="contractor-portal" style="display:none;min-height:100vh;background:#f5f5f3">
   <div style="background:#1E407C;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #C9A84C">
     <div>
-      <div style="color:#fff;font-size:16px;font-weight:700">ParkDesk Demo</div>
+      <div style="color:#fff;font-size:16px;font-weight:700">Your Hotel Name</div>
       <div style="color:rgba(255,255,255,.7);font-size:11px">Contractor Vehicle Portal</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
