@@ -567,6 +567,12 @@ on conflict (key) do nothing;</textarea>
       </div>
       <button class="btn primary" style="width:100%;justify-content:center;background:#1E407C;border-color:#1E407C;padding:12px" onclick="doLogin()">Continue →</button>
       <div style="margin-top:10px;text-align:center;font-size:11px;color:#aaa">🔒 Secured with two-factor authentication</div>
+      <div style="margin-top:14px;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:10px 14px;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:#7C3AED;margin-bottom:5px">🎯 DEMO CREDENTIALS</div>
+        <div style="font-size:12px;color:#5B21B6;margin-bottom:2px">Email: <strong>demo@parkdesk.co.uk</strong></div>
+        <div style="font-size:12px;color:#5B21B6">Password: <strong>demo1234</strong></div>
+        <div style="font-size:10px;color:#8B5CF6;margin-top:5px">No real data — sample vehicles only</div>
+      </div>
     </div>
 
     <!-- Step 2: 2FA code entry -->
@@ -1530,6 +1536,99 @@ create policy "photos_insert" on storage.objects
 
 
 <script>
+// ══════════════════════════════════════════
+// DEMO MODE — sample data + sbFetch override
+// ══════════════════════════════════════════
+let _demoMode = false;
+
+function getDemoVehicles(){
+  _demoMode = true;
+  let td = new Date();
+  function daysAgo(n){ let d=new Date(td); d.setDate(d.getDate()-n); return d.toISOString(); }
+  function daysAhead(n){ let d=new Date(td); d.setDate(d.getDate()+n); return d.toISOString(); }
+  return [
+    {reg:'AB12 CDE',name:'James Wilson',phone:'07700900001',email:'james@email.com',room_number:'201',
+     check_in_date:daysAgo(5),return_date:daysAhead(2),location:'hotel',status:'active',
+     hotel_days:5,contractor_days:0,contractor_cost:0,loyalty_visits:3,ref_code:'ARR-001',
+     current_location_start:daysAgo(5),move_log:'[]'},
+    {reg:'XY34 FGH',name:'Sarah Johnson',phone:'07700900002',email:'sarah@email.com',room_number:'315',
+     check_in_date:daysAgo(3),return_date:daysAhead(0),location:'hotel',status:'active',
+     hotel_days:3,contractor_days:0,contractor_cost:0,loyalty_visits:1,ref_code:'ARR-002',
+     current_location_start:daysAgo(3),move_log:'[]'},
+    {reg:'MN56 PQR',name:'Robert Smith',phone:'07700900003',email:'robert@email.com',room_number:'108',
+     check_in_date:daysAgo(7),return_date:daysAhead(1),location:'contractor',status:'active',
+     hotel_days:1,contractor_days:6,contractor_cost:21.00,loyalty_visits:5,ref_code:'ARR-003',
+     contractor_id:1,contractor_name:'City Parking Ltd',contractor_rate:3.50,
+     current_location_start:daysAgo(6),move_log:'[]'},
+    {reg:'EF78 STU',name:'Emma Davies',phone:'07700900004',email:'emma@email.com',room_number:'422',
+     check_in_date:daysAgo(10),return_date:daysAhead(1),location:'contractor',status:'active',
+     hotel_days:2,contractor_days:8,contractor_cost:28.00,loyalty_visits:2,ref_code:'ARR-004',
+     contractor_id:1,contractor_name:'City Parking Ltd',contractor_rate:3.50,
+     current_location_start:daysAgo(8),move_log:'[]'},
+    {reg:'GH90 VWX',name:'Michael Brown',phone:'07700900005',email:'michael@email.com',room_number:'219',
+     check_in_date:daysAgo(4),return_date:daysAhead(3),location:'contractor',status:'active',
+     hotel_days:1,contractor_days:3,contractor_cost:10.50,loyalty_visits:8,ref_code:'ARR-005',
+     contractor_id:1,contractor_name:'City Parking Ltd',contractor_rate:3.50,
+     current_location_start:daysAgo(3),move_log:'[]'},
+    {reg:'IJ12 YZA',name:'Lisa Anderson',phone:'07700900006',email:'lisa@email.com',room_number:'330',
+     check_in_date:daysAgo(6),return_date:daysAhead(4),location:'hotel',status:'active',
+     hotel_days:6,contractor_days:0,contractor_cost:0,loyalty_visits:11,ref_code:'ARR-006',
+     current_location_start:daysAgo(6),move_log:'[]'},
+    {reg:'KL34 BCD',name:'David Taylor',phone:'07700900007',email:'david@email.com',room_number:'115',
+     check_in_date:daysAgo(2),return_date:daysAhead(5),location:'hotel',status:'active',
+     hotel_days:2,contractor_days:0,contractor_cost:0,loyalty_visits:0,ref_code:'ARR-007',
+     current_location_start:daysAgo(2),move_log:'[]'},
+    {reg:'MN56 EFG',name:'Jennifer White',phone:'07700900008',email:'jennifer@email.com',room_number:'501',
+     check_in_date:daysAgo(8),return_date:daysAgo(1),location:'contractor',status:'active',
+     hotel_days:1,contractor_days:7,contractor_cost:24.50,loyalty_visits:4,ref_code:'ARR-008',
+     contractor_id:1,contractor_name:'City Parking Ltd',contractor_rate:3.50,
+     current_location_start:daysAgo(7),move_log:'[]'},
+    // History records
+    {reg:'OP78 HIJ',name:'Chris Martin',phone:'07700900009',email:'chris@email.com',room_number:'210',
+     check_in_date:daysAgo(30),return_date:daysAgo(24),check_out_date:daysAgo(24),
+     location:'hotel',status:'checked-out',hotel_days:6,contractor_days:0,
+     contractor_cost:0,loyalty_visits:2,ref_code:'ARR-009',current_location_start:daysAgo(30),move_log:'[]'},
+    {reg:'QR90 KLM',name:'Amanda Harris',phone:'07700900010',email:'amanda@email.com',room_number:'406',
+     check_in_date:daysAgo(20),return_date:daysAgo(13),check_out_date:daysAgo(13),
+     location:'hotel',status:'checked-out',hotel_days:7,contractor_days:0,
+     contractor_cost:0,loyalty_visits:6,ref_code:'ARR-010',current_location_start:daysAgo(20),move_log:'[]'},
+  ];
+}
+
+// Override sbFetch for demo mode — return sample data
+const _realSbFetch = sbFetch;
+async function sbFetch(path, opts={}){
+  if(!_demoMode) return _realSbFetch(path, opts);
+  // Demo mode — intercept DB calls and return mock data
+  let method = (opts.method||'GET').toUpperCase();
+  // Allow reads to return demo data, silently ignore writes
+  if(method==='PATCH'||method==='POST'||method==='DELETE'){
+    console.log('[DEMO] Skipping write:', method, path);
+    return null;
+  }
+  if(path.startsWith('vehicles')) return vehicles;
+  if(path.startsWith('pending_checkins')) return [
+    {id:1,reg:'ST12 NOP',name:'Thomas Evans',phone:'07700900011',email:'thomas@email.com',
+     room_number:'302',check_in_date:new Date().toISOString(),
+     return_date:new Date(Date.now()+7*86400000).toISOString(),
+     ref_code:'PCK-001',status:'pending',tc_accepted:true,created_at:new Date().toISOString()},
+  ];
+  if(path.startsWith('contractors')) return contractorsList;
+  if(path.startsWith('app_users')) return [{id:1,username:'demo',email:'demo@parkdesk.co.uk',
+    role:'admin',full_name:'Demo Manager',active:true}];
+  if(path.startsWith('audit_log')) return [];
+  if(path.startsWith('app_settings')) return [
+    {key:'total_spaces',value:'75'},{key:'daily_cap',value:'0'},{key:'long_cap',value:'75'},
+    {key:'email_hotel_name',value:'Your Hotel Name'},{key:'email_from',value:''},
+    {key:'email_api_key',value:''}
+  ];
+  if(path.startsWith('email_queue')) return [];
+  if(path.startsWith('vehicle_photos')) return [];
+  if(path.startsWith('anpr_events')) return [];
+  if(path.startsWith('tc_log')) return [];
+  return [];
+}
+
 // ── Global error handler ──
 window.onerror=function(msg,src,line){
   console.error('JS Error:',msg,'line:',line);
@@ -5379,6 +5478,31 @@ async function doLogin(){
     errEl.innerHTML='<div class="alert warn">Please enter your email address and password.</div>';
     return;
   }
+
+  // ── DEMO MODE: bypass database login ──
+  // Demo credentials: demo@parkdesk.co.uk / demo1234
+  if((email==='demo@parkdesk.co.uk'||email==='demo') && password==='demo1234'){
+    errEl.innerHTML='<div class="alert info" style="font-size:12px">⏳ Loading demo...</div>';
+    // Set Supabase URL/key to dummy values for demo
+    SB_URL = 'https://demo.supabase.co';
+    SB_KEY = 'demo_key';
+    localStorage.setItem('heathrow_sb_url','https://demo.supabase.co');
+    localStorage.setItem('heathrow_sb_key','demo_key');
+    currentUser={id:1,username:'demo',email:'demo@parkdesk.co.uk',
+      role:'admin',full_name:'Demo Manager',contractor_id:null};
+    localStorage.setItem('heathrow_user',JSON.stringify(currentUser));
+    resetLoginAttempts();
+    // Load sample demo data instead of real DB
+    vehicles = getDemoVehicles();
+    contractorsList = [{id:1,name:'City Parking Ltd',rate1:4.50,rate2:3.50,threshold:20,active:true}];
+    CFG = {TOTAL_SPACES:75,DAILY_CAP:0,LONG_CAP:75};
+    emailCFG = {apiKey:'',fromEmail:'',hotelName:'Your Hotel Name',
+      onCheckin:true,onCheckout:true,onPending:true,onApproved:true,onReminder:true};
+    _emailCFGLoaded = true;
+    finishLogin(currentUser);
+    return;
+  }
+
   if(!email.includes('@')){
     errEl.innerHTML='<div class="alert warn">Please enter a valid email address.</div>';
     return;
